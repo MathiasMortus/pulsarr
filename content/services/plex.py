@@ -349,7 +349,7 @@ class library(classes.library):
                     response = get(session, library.url  + '/library/sections/?X-Plex-Token=' + users[0][1])
                     working = True
                     if len(response.MediaContainer.Directory) == 0:
-                        print("It looks like this server does not have any libraries set-up! Please open the plex webui, setup at least one library and point it to your mounted debrid service drive.")
+                        print("It looks like this server does not have any libraries set-up! Please open the plex webui and setup at least one library.")
                         print()
                         input("Press enter to try again: ")
                         print()
@@ -508,11 +508,8 @@ class library(classes.library):
                         names += [section_.title]
                         folders = []
                         for location in section_.Location:
-                            if hasattr(element,"downloaded_releases") and len(element.downloaded_releases) > 0 and library.refresh.partial == "true":
-                                for release in element.downloaded_releases:
-                                    folders += [requests.utils.quote(location.path + "/" + release)]
-                            else:
-                                folders += [requests.utils.quote(location.path)]
+                            # Simplified - always refresh the entire library section
+                            folders += [requests.utils.quote(location.path)]
                         paths += [[section_.key,folders]]
                 delay = 2
                 try:
@@ -550,7 +547,7 @@ class library(classes.library):
                     response = get(session, library.url  + '/library/sections/?X-Plex-Token=' + users[0][1])
                     working = True
                     if len(response.MediaContainer.Directory) == 0:
-                        print("It looks like this server does not have any libraries set-up! Please open the plex webui, setup at least one library and point it to your mounted debrid service drive.")
+                        print("It looks like this server does not have any libraries set-up! Please open the plex webui and setup at least one library.")
                         print()
                         input("Press enter to try again: ")
                         print()

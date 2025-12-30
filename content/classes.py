@@ -1,8 +1,6 @@
 from base import *
 
-import releases
-import debrid
-import scraper
+import arr
 from ui.ui_print import *
 
 imdb_scraped = False
@@ -267,7 +265,6 @@ class map:
 class media:
 
     ignore_queue = []
-    downloaded_versions = []
 
     def __init__(self, other):
         self.__dict__.update(other.__dict__)
@@ -677,6 +674,10 @@ class media:
         return genres
 
     def versions(self, quick=False):
+        # No version management needed for arr integration
+        return []
+
+    def versions_old(self, quick=False):
         # initialize downloaded and existing releases
         if not hasattr(self, "existing_releases"):
             self.existing_releases = []
@@ -820,6 +821,10 @@ class media:
         return versions
 
     def version_missing(self):
+        # No version management needed for arr integration
+        return False
+
+    def version_missing_old(self):
         all_versions = []
         if self in media.ignore_queue:
             match = next((x for x in media.ignore_queue if self == x), None)
@@ -834,6 +839,10 @@ class media:
         return len(self.versions()) > 0 and not self.versions() == all_versions
 
     def set_file_names(self):
+        # No file name tracking needed for arr integration
+        pass
+
+    def set_file_names_old(self):
         if not library()[0].name == 'Plex Library' or hasattr(self, "upgradable"):
             return
         import content.services.plex as plex
@@ -1154,10 +1163,7 @@ class media:
         return []
 
     def downloading(self):
-        if hasattr(self, "version"):
-            return [self.query() + ' [' + self.version.name + ']'] in debrid.downloading
-        else:
-            return False
+        return False
 
     def hasended(self):
         if hasattr(self, "status"):
@@ -1167,11 +1173,26 @@ class media:
             return not self.isContinuingSeries
         return False
 
+    def arr_add(self):
+        """
+        Add media item to Sonarr/Radarr
+        Returns: (success: bool, retry: bool)
+        """
+        if self.type in ['movie', 'show']:
+            success = arr.add(self)
+            if success:
+                self.collect(refresh_=True)
+                return (True, False)
+            else:
+                return (False, True)
+        else:
+            ui_print(f"error: arr_add called for unsupported type: {self.type}")
+            return (False, False)
+
     def download(self, retries=0, library=[], parentReleases=[]):
-        global imdb_scraped
         refresh_ = False
-        i = 0
-        self.Releases = []
+
+        # Validate media item has required attributes
         if self.type in ["movie", "show"]:
             if not hasattr(self, "title") or self.title == "" or self.title is None:
                 ui_print("error: media item has no title. This unknown movie/show might not be released yet.")
@@ -1179,311 +1200,35 @@ class media:
             elif not hasattr(self, "year") or self.year == "" or self.year is None:
                 ui_print(f"error: media item {self.title} has no release year. This movie/show might not be released yet.")
                 return
-        scraper.services.overwrite = []
-        EIDS = []
-        imdbID = "."
-        if hasattr(self, "EID"):
-            EIDS = self.EID
-        if hasattr(self, "parentEID"):
-            EIDS = self.parentEID
-        if hasattr(self, "grandparentEID"):
-            EIDS = self.grandparentEID
-        for EID in EIDS:
-            if EID.startswith("imdb"):
-                service, imdbID = EID.split('://')
-        # set anime info before episodes are removed
-        self.isanime()
+
+        # Handle movies
         if self.type == 'movie':
             ui_print(f"processing movie: {self.title} ({self.year})", debug=ui_settings.debug)
-            if (len(self.uncollected(library)) > 0 or self.version_missing()) and len(self.versions()) > 0:
-                if self.released() and not self.watched() and not self.downloading():
-                    if not hasattr(self, "year") or self.year == None:
-                        ui_print("error: media item has no release year.")
-                        return
-                    tic = time.perf_counter()
-                    alternate_years = [self.year, self.year - 1, self.year + 1]
-                    langs = []
-                    for version in self.versions():
-                        if not version.lang in langs and not version.lang == 'en':
-                            self.aliases(version.lang)
-                            langs += [version.lang]
-                    self.aliases('en')
-                    imdb_scraped = False
-                    for year in alternate_years:
-                        i = 0
-                        while len(self.Releases) == 0 and i <= retries:
-                            for k, title in enumerate(self.alternate_titles):
-                                self.Releases += scraper.scrape(self.query(title).replace(
-                                    str(self.year), str(year)), self.deviation(year=str(year))+"("+imdbID+")?")
-                                if len(self.Releases) < 20 and k == 0 and not imdb_scraped and not imdbID == ".":
-                                    self.Releases += scraper.scrape(
-                                        imdbID, "(.*|"+imdbID+")")
-                                    imdb_scraped = True
-                                if len(self.Releases) > 0:
-                                    break
-                            i += 1
-                        if not len(self.Releases) == 0:
-                            self.year = year
-                            break
-                    debrid_downloaded, retry = self.debrid_download(
-                        force=False)
-                    if debrid_downloaded:
-                        refresh_ = True
-                        if not retry and (self.watchlist.autoremove == "both" or self.watchlist.autoremove == "movie"):
+            if len(self.uncollected(library)) > 0:
+                if self.released() and not self.watched():
+                    success, retry = self.arr_add()
+                    if success and not retry:
+                        if self.watchlist.autoremove == "both" or self.watchlist.autoremove == "movie":
                             self.watchlist.remove([], self)
-                        toc = time.perf_counter()
-                        ui_print('took ' + str(round(toc - tic, 2)) + 's')
                     if retry:
                         self.watch()
+
+        # Handle TV shows
         elif self.type == 'show':
             ui_print(f"processing show: {self.title} ({self.year})", debug=ui_settings.debug)
-            if len(self.versions()) > 0 and self.released() and (not self.collected(library) or self.version_missing()) and not self.watched():
-                self.isanime()
-                self.Seasons = self.uncollected(library)
-                # if there are uncollected episodes
-                if len(self.Seasons) > 0:
-                    tic = time.perf_counter()
-                    langs = []
-                    for version in self.versions():
-                        if not version.lang in langs and not version.lang == 'en':
-                            self.aliases(version.lang)
-                            langs += [version.lang]
-                    self.aliases('en')
-                    imdb_scraped = False
-                    # if there is more than one uncollected season
-                    if len(self.Seasons) > 1:
-                        if self.isanime():
-                            for k, title in enumerate(self.alternate_titles[:3]):
-                                self.Releases += scraper.scrape(self.anime_query(title), self.deviation(
-                                ) + "("+imdbID+")?(nyaa"+"|".join(self.alternate_titles)+")?")
-                                if len(self.Releases) < 20 and k == 0 and not imdb_scraped and not imdbID == ".":
-                                    self.Releases += scraper.scrape(
-                                        imdbID, "(.*|S00|"+imdbID+"|nyaa"+"|".join(self.alternate_titles)+")")
-                                    imdb_scraped = True
-                                if len(self.Releases) > 0:
-                                    break
-                        else:
-                            for k, title in enumerate(self.alternate_titles[:3]):
-                                self.Releases += scraper.scrape(self.query(
-                                    title), self.deviation() + "("+imdbID+")?")
-                                if len(self.Releases) < 20 and k == 0 and not imdb_scraped and not imdbID == ".":
-                                    self.Releases += scraper.scrape(
-                                        imdbID, "(.*|S00|"+imdbID+")")
-                                    imdb_scraped = True
-                                if len(self.Releases) > 0:
-                                    break
-                        debrid.check(self)
-                        parentReleases = copy.deepcopy(self.Releases)
-                        # if there are more than 3 uncollected seasons, look for multi-season releases before downloading single-season releases
-                        if len(self.Seasons) > 3:
-                            # gather file information on scraped, cached releases
-                            multi_season_releases = []
-                            season_releases = [None] * len(self.Seasons)
-                            minimum_episodes = len(self.files()) / 2
-                            season_queries = []
-                            for season in self.Seasons:
-                                season_queries += [season.deviation()]
-                            season_queries_str = '(' + \
-                                ')|('.join(season_queries) + ')'
-                            if self.isanime():
-                                for release in self.Releases:
-                                    if regex.search(self.anime_count, release.title, regex.I):
-                                        multi_season_releases += [release]
-                            for release in self.Releases:
-                                match = regex.match(
-                                    season_queries_str, release.title, regex.I)
-                                for version in release.files:
-                                    if isinstance(version.wanted, int):
-                                        # if a multi season pack contains more than half of all uncollected episodes, accept it as a multi-season-pack.
-                                        if version.wanted > minimum_episodes:
-                                            multi_season_releases += [release]
-                                            break
-                                            # if the release is a single-season pack, find out the quality
-                                        if match:
-                                            for index, season_query in enumerate(season_queries):
-                                                if regex.match(season_query, release.title, regex.I):
-                                                    if version.wanted >= len(self.Seasons[index].files())-2 and season_releases[index] == None:
-                                                        quality = regex.search(
-                                                            '(2160|1080|720|480)(?=p|i)', release.title, regex.I)
-                                                        if quality:
-                                                            quality = int(
-                                                                quality.group())
-                                                        else:
-                                                            quality = 0
-                                                        season_releases[index] = quality
-                                                        break
-                            # if there are eligible multi-season packs
-                            if len(multi_season_releases) > 0:
-                                download_multi_season_release = False
-                                # if one of the shows seasons cant be downloaded as a single-season pack, download the multi-season pack.
-                                for season_release in season_releases:
-                                    if season_release == None:
-                                        download_multi_season_release = True
-                                        break
-                                # if all seasons of the show could also be downloaded as single-season packs, compare the quality of the best ranking multi season pack with the lowest quality of the single season packs.
-                                if not download_multi_season_release:
-                                    season_quality = min(season_releases)
-                                    quality = regex.search(
-                                        '(2160|1080|720|480)(?=p|i)', multi_season_releases[0].title, regex.I)
-                                    if quality:
-                                        quality = int(quality.group())
-                                    else:
-                                        quality = 0
-                                    if quality >= season_quality:
-                                        download_multi_season_release = True
-                                # if either not all seasons can be downloaded as single-season packs or the single season packs are of equal or lower quality compared to the multi-season packs, download the multi season packs.
-                                if download_multi_season_release:
-                                    self.Releases = multi_season_releases
-                                    debrid_downloaded, retry = self.debrid_download()
-                                    if debrid_downloaded:
-                                        refresh_ = True
-                                        if not retry:
-                                            if self.isanime():
-                                                self.Seasons = []
-                                            else:
-                                                for season in self.Seasons[:]:
-                                                    for episode in season.Episodes[:]:
-                                                        for file in self.Releases[0].files:
-                                                            if hasattr(file, 'match'):
-                                                                if file.match == episode.files()[0]:
-                                                                    season.Episodes.remove(
-                                                                        episode)
-                                                                    break
-                                                    if len(season.Episodes) == 0:
-                                                        self.Seasons.remove(
-                                                            season)
-                    # Download all remaining seasons by starting a thread for each season.
-                    results = [None] * len(self.Seasons)
-                    threads = []
-                    # start thread for each season
-                    for index, Season in enumerate(self.Seasons):
-                        results[index] = Season.download(
-                            library=library, parentReleases=parentReleases)
-                    retry = False
-                    for index, result in enumerate(results):
-                        if result == None:
-                            continue
-                        if result[0]:
-                            refresh_ = True
-                        if result[1]:
-                            retry = True
-                    if not retry and (self.watchlist.autoremove == "both" or self.watchlist.autoremove == "show"):
+            if self.released() and not self.collected(library) and not self.watched():
+                success, retry = self.arr_add()
+                if success and not retry:
+                    if self.watchlist.autoremove == "both" or self.watchlist.autoremove == "show":
                         self.watchlist.remove([], self)
-                    toc = time.perf_counter()
-                    ui_print('took ' + str(round(toc - tic, 2)) + 's')
-        elif self.type == 'season':
-            ui_print(f"processing: {self.parentTitle} {self.title}", debug=ui_settings.debug)
-            debrid_downloaded = False
-            for release in parentReleases:
-                if regex.match(self.deviation(), release.title, regex.I):
-                    self.Releases += [release]
-            # Set the episodes parent releases to be the seasons parent releases:
-            scraped_releases = copy.deepcopy(parentReleases)
-            # If there is more than one episode
-            if len(self.Episodes) > 2:
-                if self.season_pack(scraped_releases):
-                    debrid_downloaded, retry = self.debrid_download()
-                if scraper.traditional() or debrid_downloaded:
-                    for episode in self.Episodes:
-                        episode.skip_scraping = True
-                # If there was nothing downloaded, scrape specifically for this season
-                if not debrid_downloaded:
-                    self.Releases = []
-                    if self.isanime():
-                        for k, title in enumerate(self.alternate_titles[:3]):
-                            self.Releases += scraper.scrape(self.anime_query(title), "(.*|S"+str(
-                                "{:02d}".format(self.index))+"|"+imdbID+"|nyaa"+"|".join(self.alternate_titles)+")")
-                            if len(self.Releases) < 20 and k == 0 and not imdb_scraped and not imdbID == ".":
-                                self.Releases += scraper.scrape(imdbID, "(.*|S"+str("{:02d}".format(
-                                    self.index))+"|"+imdbID+"|nyaa"+"|".join(self.alternate_titles)+")")
-                                imdb_scraped = True
-                            if len(self.Releases) > 0:
-                                break
-                    if len(self.Releases) == 0:
-                        for k, title in enumerate(self.alternate_titles[:3]):
-                            self.Releases += scraper.scrape(self.query(
-                                title)[:-1], "(.*|S"+str("{:02d}".format(self.index))+"|"+imdbID+")")
-                            if len(self.Releases) < 20 and k == 0 and not imdb_scraped and not imdbID == ".":
-                                self.Releases += scraper.scrape(
-                                    imdbID, "(.*|S"+str("{:02d}".format(self.index))+"|"+imdbID+")")
-                                imdb_scraped = True
-                            if len(self.Releases) > 0:
-                                break
-                    # Set the episodes parent releases to be the newly scraped releases
-                    debrid.check(self)
-                    scraped_releases = copy.deepcopy(self.Releases)
-            # If there was nothing downloaded, attempt downloading again using the newly scraped releases
-            retry = False
-            if not debrid_downloaded:
-                for release in self.Releases[:]:
-                    if not regex.match(self.deviation(), release.title, regex.I):
-                        ui_print("[download (show)] " + release.title + " does not match deviation " + self.deviation())
-                        self.Releases.remove(release)
-                if self.season_pack(scraped_releases):
-                    debrid_downloaded, retry = self.debrid_download()
-            retryep = False
-            # If a season pack was downloaded, make sure there are episode releases available for missing versions before attempting to download
-            if debrid_downloaded:
-                refresh_ = True
-                attempt_episodes = False
-                for episode in self.Episodes:
-                    episode.skip_scraping = True
-                    for version in copy.deepcopy(episode.versions()):
-                        for rule in version.rules[:]:
-                            if rule[0] == "bitrate":
-                                version.rules.remove(rule)
-                        test_releases = copy.deepcopy(scraped_releases)
-                        releases.sort(test_releases, version, False)
-                        if len(test_releases) > 0:
-                            attempt_episodes = True
-                            break
-                    if not attempt_episodes:
-                        episode.skip_download = True
-            # Check if all episodes were successfuly downloaded, download them or queue them to be ignored otherwise
-            for episode in self.Episodes:
-                if len(episode.versions()) > 0:
-                    downloaded = False
-                    retryep = True
-                    if not hasattr(episode, "skip_download"):
-                        downloaded, retryep = episode.download(
-                            library=library, parentReleases=scraped_releases)
-                    if downloaded:
-                        refresh_ = True
-                    if retryep:
-                        episode.watch()
-            return refresh_, (retry or retryep)
-        elif self.type == 'episode':
-            for release in parentReleases:
-                if regex.match(self.deviation(), release.title, regex.I):
-                    self.Releases += [release]
-            debrid_downloaded = False
-            retry = True
-            if len(self.Releases) > 0:
-                debrid_downloaded, retry = self.debrid_download()
-            if (not debrid_downloaded or retry) and not hasattr(self, "skip_scraping"):
-                if debrid_downloaded:
-                    refresh_ = True
-                if self.isanime():
-                    for title in self.alternate_titles[:3]:
-                        self.Releases += scraper.scrape(self.anime_query(title), self.deviation(
-                        ) + "("+imdbID+")?(nyaa"+"|".join(self.alternate_titles)+")?")
-                        if len(self.Releases) > 0:
-                            break
-                if len(self.Releases) == 0 or not self.isanime():
-                    for title in self.alternate_titles[:3]:
-                        if self.isanime():
-                            self.Releases += scraper.scrape(self.query(title).replace(
-                                '.', ' '), self.deviation() + "("+imdbID+")?")
-                        else:
-                            self.Releases += scraper.scrape(self.query(
-                                title), self.deviation() + "("+imdbID+")?")
-                        if len(self.Releases) > 0:
-                            break
-                debrid_downloaded, retry = self.debrid_download()
-                if debrid_downloaded:
-                    refresh_ = True
-                return refresh_, retry
-            return debrid_downloaded, retry
+                if retry:
+                    self.watch()
+
+        # Season and episode types are not handled anymore - Sonarr/Radarr manage this
+        elif self.type in ['season', 'episode']:
+            ui_print(f"Skipping {self.type} - managed by Sonarr/Radarr", debug=ui_settings.debug)
+            return (False, False)
+
         self.collect(refresh_)
 
     def downloaded(self):

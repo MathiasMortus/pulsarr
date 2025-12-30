@@ -1,9 +1,7 @@
 from base import *
 
 import content
-import scraper
-import releases
-import debrid
+import arr
 from ui import ui_settings
 
 class setting:
@@ -366,64 +364,39 @@ settings_list = [
     
     ]
         ],
-    ['Scraper Settings', [
-        setting('Sources', [''], scraper.services, 'active', entry="source", subclass=True, preflight=True),
-        setting('Versions', [], releases.sort, 'versions', special=True, entry="version"),
-        setting('Special character renaming', ['Please specify a character or string that should be replaced, or provide a regex using {{regex}}: ','Please specify with what character or string it should be replaced: '],releases.rename, 'replaceChars', entry="rule",help='In this setting you can specify a character or a string that should be replaced by nothing, some other character or a string. You can enter regular expressions using {{regex}}.'),
-        setting('Rarbg API Key', 'The Rarbg API Key gets refreshed automatically, enter the default value: ',scraper.services.rarbg, 'token', hidden=True),
-        setting('Jackett Base URL', 'Please specify your Jackett base URL: ', scraper.services.jackett, 'base_url',hidden=True),
-        setting('Jackett API Key', 'Please specify your Jackett API Key: ', scraper.services.jackett, 'api_key',hidden=True),
-        setting('Jackett resolver timeout', 'Please enter the resolver timeout in seconds: ', scraper.services.jackett, 'resolver_timeout',hidden=True),
-        setting('Jackett indexer filter', 'Please enter the jackett indexer filters that should be used, seperated by a "," character. Enter "all" to not filter your indexers: ', scraper.services.jackett, 'filter', hidden=True),
-        setting('Prowlarr Base URL', 'Please specify your Prowlarr base URL: ', scraper.services.prowlarr, 'base_url',hidden=True),
-        setting('Prowlarr API Key', 'Please specify your Prowlarr API Key: ', scraper.services.prowlarr, 'api_key',hidden=True),
-        setting('Orionoid API Key','Please open your favorite browser, log into your orionoid account and open "https://auth.orionoid.com". Enter this code: ',scraper.services.orionoid, 'token', hidden=True, oauth=True),
-        setting('Orionoid Scraper Parameters',['Please enter a valid orionoid parameter: ','Please enter a valid value: '],scraper.services.orionoid, 'default_opts', entry="parameter", help='This settings lets you control the orionoid scraping parameters. Check out the possible parameters and their values at "https://panel.orionoid.com/" in the "Developers" menu, section "API Docs" under "Stream API".', hidden=True),
-        setting('Nyaa parameters', 'Enter custom url parameters. Categories: anime "&c=1_0", anime raw "&c=1_4", anime EN subs "&c=1_2", anime non-EN subs "&c=1_3". Enter your parameters (default: "&c=1_0&s=seeders&o=desc"): ',scraper.services.nyaa, 'params', hidden=True),
-        setting('Nyaa sleep time', 'Enter a time in seconds to sleep between requests (default: "5"): ',scraper.services.nyaa, 'sleep', hidden=True),
-        setting('Nyaa proxy', 'Enter a proxy to use for nyaa (default: "nyaa.si"): ',scraper.services.nyaa, 'proxy', hidden=True),
-        setting('Torrentio Scraper Parameters','Please enter a valid torrentio manifest url: ',scraper.services.torrentio, 'default_opts', entry="parameter", help='This settings lets you control the torrentio scraping parameters. Visit "https://torrentio.strem.fun/configure" and configure your settings. Dont choose a debrid service. The "manifest url" will be copied to your clipboard.', hidden=True),
-        setting('Torrentio Base URL', 'Please specify your Torrentio base URL (eg. https://torrentio.strem.fun/): ', scraper.services.torrentio, 'base_url', hidden=True),
-        setting('Zilean Base URL', 'Please specify your Zilean base URL: ', scraper.services.zilean, 'base_url', hidden=True),
-        setting('Mediafusion Base URL', 'Please specify your Mediafusion base URL: ', scraper.services.mediafusion, 'base_url', hidden=True),
-        setting('Mediafusion API Key', 'Please specify your Mediafusion API Key: ', scraper.services.mediafusion, 'api_password', hidden=True),
-        setting('Mediafusion Request Timeout', 'Please enter the request timeout in seconds: ', scraper.services.mediafusion, 'request_timeout_sec', hidden=True),
-        setting('Mediafusion Rate Limit', 'Please enter the minimum number of seconds between requests: ', scraper.services.mediafusion, 'rate_limit_sec', hidden=True),
-        setting('Mediafusion Scraper Parameters', 'Please enter a valid Mediafusion manifest URL: ', scraper.services.mediafusion, 'manifest_json_url', entry="parameter",
-                help='This setting lets you control the mediafusion scraping parameters. Visit "https://mediafusion.elfhosted.com/configure" and configure your settings. Please choose "Direct Torrent (Free)" as the debrid service. Click on "Share Manifest URL" and paste it here.',
-                hidden=True),
-        setting('Comet Request Timeout', 'Please enter the request timeout in seconds: ', scraper.services.comet, 'request_timeout_sec', hidden=True),
-        setting('Comet Rate Limit', 'Please enter the minimum number of seconds between requests: ', scraper.services.comet, 'rate_limit_sec', hidden=True),
-        setting('Comet Scraper Parameters', 'Please enter a valid Comet manifest URL: ', scraper.services.comet, 'manifest_json_url', entry="parameter",
-                help='This setting lets you control the comet scraping parameters. Visit "https://comet.elfhosted.com/configure" and configure your settings. Click on "Copy Link" and paste it here.', hidden=True),
-            ]
-        ],
-    ['Debrid Services', [
-        setting('Debrid Services', [''], debrid.services, 'active', required=True, preflight=True, entry="service",
-                subclass=True, help='Please setup at least one debrid service: '),
-        setting(
-            'Tracker specific Debrid Services',
-            [
-                'Please specify what tracker to look for by providing a regex match group: ',
-                'Please specify what debrid service should be used for a matching tracker (enter "RD","PM","AD","PUT", or "DL"): ',
-            ],
-            debrid, 'tracker',
-            entry="rule",
-        ),
-        setting('Real Debrid API Key', 'Please enter your Real Debrid API Key: ', debrid.services.realdebrid, 'api_key',
-                hidden=True),
-        setting('All Debrid API Key', 'Please enter your All Debrid API Key: ', debrid.services.alldebrid, 'api_key',
-                hidden=True),
-        setting('Premiumize API Key', 'Please enter your Premiumize API Key: ', debrid.services.premiumize, 'api_key',
-                hidden=True),
-        setting('Debrid Link API Key',
-                'Please open your favorite browser, log into your debridlink account and open "https://debrid-link.fr/device". Enter this code: ',
-                debrid.services.debridlink, 'api_key', hidden=True, oauth=True),
-        setting('Put.io API Key',
-                'Please open your favorite browser, log into your put.io account and open "http://put.io/link". Enter this code: ',
-                debrid.services.putio, 'api_key', hidden=True, oauth=True),
-        setting('Torbox API Key', 'Please enter your Torbox API Key: ', debrid.services.torbox, 'api_key',
-                hidden=True),
+    ['Arr Services', [
+        setting('Sonarr Base URL',
+                'Please enter your Sonarr base URL (e.g., http://localhost:8989): ',
+                arr.services.sonarr, 'base_url', required=True, preflight=True,
+                help='The base URL where your Sonarr instance is accessible.'),
+        setting('Sonarr API Key',
+                'Please enter your Sonarr API Key: ',
+                arr.services.sonarr, 'api_key', required=True, preflight=True, hidden=True,
+                help='Found in Sonarr under Settings → General → Security'),
+        setting('Sonarr Quality Profile ID',
+                'Please enter the Quality Profile ID (default: 1): ',
+                arr.services.sonarr, 'quality_profile_id', hidden=True,
+                help='The quality profile to use for TV shows'),
+        setting('Sonarr Root Folder',
+                'Please enter the root folder path: ',
+                arr.services.sonarr, 'root_folder_path', required=True, preflight=True, hidden=True,
+                help='Where TV shows will be stored (e.g., /data/media/tv)'),
+        setting('Radarr Base URL',
+                'Please enter your Radarr base URL (e.g., http://localhost:7878): ',
+                arr.services.radarr, 'base_url', required=True, preflight=True,
+                help='The base URL where your Radarr instance is accessible.'),
+        setting('Radarr API Key',
+                'Please enter your Radarr API Key: ',
+                arr.services.radarr, 'api_key', required=True, preflight=True, hidden=True,
+                help='Found in Radarr under Settings → General → Security'),
+        setting('Radarr Quality Profile ID',
+                'Please enter the Quality Profile ID (default: 1): ',
+                arr.services.radarr, 'quality_profile_id', hidden=True,
+                help='The quality profile to use for movies'),
+        setting('Radarr Root Folder',
+                'Please enter the root folder path: ',
+                arr.services.radarr, 'root_folder_path', required=True, preflight=True, hidden=True,
+                help='Where movies will be stored (e.g., /data/media/movies)'),
     ]
         ],
     ['UI Settings', [

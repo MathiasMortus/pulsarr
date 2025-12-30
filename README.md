@@ -1,26 +1,147 @@
-# plex-debrid | ElfHosted
+# Plex Watchlist → Sonarr/Radarr Integration
 
 ## What is this?
 
-This is an [ElfHosted](https://elfhosted.com) maintenance-and-features fork of the deprecated-and-archived https://github.com/itsToggle/plex_debrid with the following improvements:
+A lightweight automation tool that monitors your Plex watchlist and automatically adds:
+- **TV shows** to Sonarr
+- **Movies** to Radarr
+
+This is a fork of plex_debrid that has been completely refactored to remove all debrid and scraper functionality, focusing solely on Plex watchlist → Sonarr/Radarr integration.
 
 ## How does it work?
 
-Here's a [detailed guide / walkthrough](https://elfhosted.com/guides/media/stream-from-real-debrid-with-plex/)
+1. Monitors your Plex watchlist (and optionally Trakt lists or Overseerr requests)
+2. When you add something to your watchlist:
+   - TV shows are automatically added to Sonarr with monitoring enabled
+   - Movies are automatically added to Radarr with monitoring enabled
+3. Sonarr/Radarr handle finding and downloading the content through their configured indexers
+4. Optionally removes items from watchlist after successfully adding to Sonarr/Radarr
 
-## Can I use it without ElfHosted?
+## Requirements
 
-Yes, of course :) You can use it just like the original, but you're "on your own", support-wise!
+- Python 3.7+
+- Plex account with watchlist access
+- Sonarr v3+ (for TV shows)
+- Radarr v3+ (for movies)
+- Sonarr/Radarr must be configured with:
+  - At least one indexer (Jackett, Prowlarr, etc.)
+  - Quality profiles
+  - Root folders
 
-One variation to note is that you'll need to set the ENV vars `CLIENT_ID` and `CLIENT_SECRET` to your own Trakt auth credentials. The ones in the original itstoggle repo expired and have not been refreshed. If you don't care to use Trackt, just set them to something non-null so that the script won't error out.
+## Installation
 
-## Improvements
+```bash
+git clone https://github.com/yourusername/plex_debrid.git
+cd plex_debrid
+pip install -r requirements.txt
+python main.py
+```
 
-* ✅ Support [ElfHosted internal URLs](https://elfhosted.com/how-to/connect-apps/) for [Plex](https://elfhosted.com/app/plex/), [Jellyfin](https://elfhosted.com/app/jellyfin/), [Overseerr](https://elfhosted.com/app/overseerr/), [Jackett](https://elfhosted.com/app/jackett/), [Prowlarr](https://elfhosted.com/app/prowlarr/) by default.
-* ✅ Trakt OAuth [fixed](https://github.com/elfhosted/plex_debrid/commit/c678fa1e5974a5c666b2fe70d65228c6fdfb4047) (*by passing your own client ID / secret in ENV vars*).
-* ✅ Integrated with [Zilean](https://github.com/iPromKnight/zilean/) for scraping [DebridMediaManager](https://debridmediamanager.com/) (DMM) public hashes, defaults to ElfHosted internal Zilean service.
-* ✅ Parametize watchlist loop interval (*defaults to 30s instead of hard-coded 30 min*)
-* ✅ Single episode downloads [fixed](https://github.com/elfhosted/plex_debrid/pull/1)
+## Configuration
+
+On first run, you'll be prompted to configure:
+
+### Content Services
+- **Plex Watchlist**: Your Plex token for watchlist access
+- **Trakt** (optional): Trakt authentication for additional watchlist sources
+- **Overseerr** (optional): Overseerr API for request monitoring
+
+### Sonarr Configuration
+- **Base URL**: e.g., `http://localhost:8989` or `http://sonarr:8989`
+- **API Key**: Found in Sonarr under Settings → General → Security
+- **Quality Profile ID**: The ID of the quality profile to use (default: 1)
+- **Root Folder**: Where TV shows will be stored (e.g., `/data/media/tv`)
+
+### Radarr Configuration
+- **Base URL**: e.g., `http://localhost:7878` or `http://radarr:7878`
+- **API Key**: Found in Radarr under Settings → General → Security
+- **Quality Profile ID**: The ID of the quality profile to use (default: 1)
+- **Root Folder**: Where movies will be stored (e.g., `/data/media/movies`)
+
+### Library Services
+- **Library Collection Service**: Choose Plex or Jellyfin to check existing library
+- **Library Update Services**: Optional library refresh after adding content
+
+## Usage
+
+### Running the Service
+
+```bash
+python main.py
+```
+
+Or run as a background service:
+
+```bash
+python main.py -service
+```
+
+### Menu Options
+
+1. **Run**: Start monitoring watchlists
+2. **Settings**: Configure Sonarr, Radarr, Plex, and other services
+3. **Ignored Media**: View and manage ignored items
+
+## Features
+
+- ✅ Automatic watchlist monitoring (default: every 30 seconds)
+- ✅ Sonarr integration for TV shows
+- ✅ Radarr integration for movies
+- ✅ Library checking to avoid duplicates
+- ✅ Auto-remove from watchlist after adding (configurable)
+- ✅ Support for Plex, Trakt, and Overseerr watchlists
+- ✅ Jellyfin library support
+
+## Key Changes from plex_debrid
+
+This fork has been completely refactored:
+
+### Removed
+- ❌ All debrid services (Real-Debrid, AllDebrid, Premiumize, etc.)
+- ❌ All torrent scrapers (RarBG, Jackett, Prowlarr, Torrentio, etc.)
+- ❌ Release quality management and version filtering
+- ❌ Manual scraper interface
+
+### Added
+- ✅ Sonarr API integration
+- ✅ Radarr API integration
+- ✅ Simplified workflow focused on watchlist → arr services
+
+## Migrating from plex_debrid 2.x
+
+If you're migrating from the original plex_debrid:
+
+1. **Backup** your current `settings.json`
+2. Pull the latest changes
+3. Run `python main.py` - you'll be prompted to reconfigure
+4. Your Plex and Trakt watchlist settings will be preserved
+5. You'll need to configure Sonarr and Radarr settings
+
+## Troubleshooting
+
+### "Sonarr: Not configured"
+- Ensure you've entered the Sonarr base URL and API key in settings
+- Test connectivity: Settings → Arr Services → Sonarr Base URL
+
+### "No TVDB ID found"
+- Plex metadata may be incomplete
+- Try refreshing metadata in Plex for that show
+
+### Items not being added
+- Check that items have been released (not future releases)
+- Verify library checking isn't marking them as already collected
+- Check debug logs: Settings → UI Settings → Debug printing → true
+
+## Environment Variables
+
+For Docker/automated deployments:
+
+- `CLIENT_ID`: Trakt OAuth client ID (if using Trakt)
+- `CLIENT_SECRET`: Trakt OAuth client secret (if using Trakt)
+
+## Support
+
+This is a community fork. For issues or questions, please open a GitHub issue.
 
 ## Thanks to these contributors!
 
