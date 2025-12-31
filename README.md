@@ -28,72 +28,100 @@ This is a fork of plex_debrid that has been completely refactored to remove all 
   - Quality profiles
   - Root folders
 
-## Installation
+## Quick Start Guide
+
+### Step 1: Install
 
 ```bash
 git clone https://github.com/yourusername/plex_monitor.git
 cd plex_monitor
 pip install -r requirements.txt
+```
+
+### Step 2: First-Time Configuration
+
+Run the interactive setup:
+
+```bash
 python main.py
 ```
 
-## Configuration
+You'll be prompted to configure:
 
-On first run, you'll be prompted to configure:
+#### Required Settings
 
-### Content Services
-- **Plex Watchlist**: Your Plex token for watchlist access
-- **Trakt** (optional): Trakt authentication for additional watchlist sources
-- **Overseerr** (optional): Overseerr API for request monitoring
+**Plex Token** (Content Services → Plex)
+- Get your token from: https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/
+- Example: `xyzABC123-example-token`
 
-### Sonarr Configuration
-- **Base URL**: e.g., `http://localhost:8989` or `http://sonarr:8989`
-- **API Key**: Found in Sonarr under Settings → General → Security
-- **Quality Profile ID**: The ID of the quality profile to use (default: 1)
-- **Root Folder**: Where TV shows will be stored (e.g., `/data/media/tv`)
+**Sonarr Configuration** (Arr Services → Sonarr)
+- **Base URL**: `http://localhost:8989` (or your Sonarr server address)
+- **API Key**: Found in Sonarr → Settings → General → Security → API Key
+- **Quality Profile ID**: Usually `1` (can be found in Sonarr → Settings → Profiles)
+- **Root Folder**: Must match exactly a root folder configured in Sonarr
+  - Example: `/data/media/tv` or `/tv`
+  - Find in Sonarr → Settings → Media Management → Root Folders
 
-### Radarr Configuration
-- **Base URL**: e.g., `http://localhost:7878` or `http://radarr:7878`
-- **API Key**: Found in Radarr under Settings → General → Security
-- **Quality Profile ID**: The ID of the quality profile to use (default: 1)
-- **Root Folder**: Where movies will be stored (e.g., `/data/media/movies`)
+**Radarr Configuration** (Arr Services → Radarr)
+- **Base URL**: `http://localhost:7878` (or your Radarr server address)
+- **API Key**: Found in Radarr → Settings → General → Security → API Key
+- **Quality Profile ID**: Usually `1` (can be found in Radarr → Settings → Profiles)
+- **Root Folder**: Must match exactly a root folder configured in Radarr
+  - Example: `/data/media/movies` or `/movies`
+  - Find in Radarr → Settings → Media Management → Root Folders
 
-### Library Services
-- **Library Collection Service**: Choose Plex or Jellyfin to check existing library
-- **Library Update Services**: Optional library refresh after adding content
+#### Optional Settings
 
-## Usage
+**Library Collection Service** (Library Services)
+- Choose `plex` or `jellyfin` to check what's already in your library
+- Prevents re-adding content you already have
 
-### Option 1: Web UI Configuration (Recommended for Docker/Unraid)
+**Trakt Integration** (Content Services → Trakt)
+- Optional: Monitor Trakt lists in addition to Plex watchlist
 
-Start the web configuration interface:
+### Step 3: Test the Connection
 
-```bash
-python webui.py
+After configuration, the setup will automatically test connections to Sonarr and Radarr. You should see:
+```
+✓ Sonarr: Connected successfully (version X.X.X)
+✓ Radarr: Connected successfully (version X.X.X)
 ```
 
-Then open your browser to `http://localhost:5000` to configure plex_monitor through a user-friendly web interface.
+If you see errors, check:
+- URLs are accessible from where you're running plex_monitor
+- API keys are correct
+- No typos in configuration
 
-Features:
-- ✅ Easy form-based configuration
-- ✅ Test Sonarr/Radarr connections
-- ✅ View configuration status
-- ✅ Perfect for Docker/Unraid deployments
+### Step 4: Test with Watchlist
 
-### Option 2: Terminal Menu
+1. Add a movie or TV show to your Plex watchlist
+2. Run plex_monitor:
+   ```bash
+   python main.py
+   ```
+3. Choose option `1) Run`
+4. Watch the logs - you should see:
+   ```
+   processing movie: Test Movie (2024)
+   Radarr: Looking up movie with TMDB ID: ...
+   Radarr: Successfully added movie: Test Movie
+   ```
+5. Check Sonarr/Radarr - the content should now be there with monitoring enabled
 
-For local/interactive setups:
+## Usage Modes
+
+### Interactive Mode (Terminal Menu)
 
 ```bash
 python main.py
 ```
 
 Menu Options:
-1. **Run**: Start monitoring watchlists
-2. **Settings**: Configure Sonarr, Radarr, Plex, and other services
-3. **Ignored Media**: View and manage ignored items
+1. **Run**: Start monitoring watchlists (runs continuously)
+2. **Settings**: Modify configuration (Sonarr, Radarr, Plex, etc.)
+3. **Ignored Media**: View and manage items you've marked to ignore
 
-### Option 3: Service Mode (Background)
+### Service Mode (Background/Docker)
 
 For automated/production use:
 
@@ -101,7 +129,128 @@ For automated/production use:
 python main.py -service
 ```
 
-This runs continuously without user interaction, perfect for Docker containers.
+- Runs continuously without user interaction
+- Perfect for Docker containers or background processes
+- Checks watchlist every 30 seconds (configurable in settings)
+- All activity logged to `plex_monitor.log`
+
+**View logs in Docker**: Use `docker logs -f <container-name>` or Unraid's Docker console
+
+## Configuration Details
+
+### Finding Your Root Folders
+
+Root folders must **exactly match** what's configured in Sonarr/Radarr:
+
+**In Sonarr**:
+1. Go to Settings → Media Management → Root Folders
+2. Copy the exact path (e.g., `/data/media/tv`)
+3. Paste this into plex_monitor settings
+
+**In Radarr**:
+1. Go to Settings → Media Management → Root Folders
+2. Copy the exact path (e.g., `/data/media/movies`)
+3. Paste this into plex_monitor settings
+
+### Quality Profiles
+
+Quality profiles control what quality releases Sonarr/Radarr will download:
+
+1. Go to Settings → Profiles in Sonarr/Radarr
+2. Note the ID of your preferred profile (hover over it or check the URL)
+3. Use this ID in plex_monitor settings (default is `1`)
+
+### Checking Existing Library
+
+Enable "Library Collection Service" to prevent re-adding content:
+
+- Set to `plex` if using Plex as your media server
+- Set to `jellyfin` if using Jellyfin
+- plex_monitor will check if content exists before adding to Sonarr/Radarr
+
+## Docker / Unraid Setup
+
+### Docker Compose (Recommended)
+
+Create `docker-compose.yml`:
+
+```yaml
+version: '3'
+services:
+  plex-monitor:
+    image: your-image
+    container_name: plex-monitor
+    restart: unless-stopped
+    volumes:
+      - ./config:/app
+    environment:
+      - TZ=America/New_York
+    command: python main.py -service
+```
+
+**First-time setup** (interactive configuration):
+```bash
+docker compose run --rm plex-monitor python main.py
+```
+
+**Normal operation**:
+```bash
+docker compose up -d
+```
+
+**View logs**:
+```bash
+docker compose logs -f
+```
+
+### Basic Docker Run
+
+**First-time setup**:
+```bash
+docker run -it --rm \
+  -v /path/to/config:/app \
+  your-image python main.py
+```
+
+**Normal operation**:
+```bash
+docker run -d \
+  --name plex-monitor \
+  --restart unless-stopped \
+  -v /path/to/config:/app \
+  your-image python main.py -service
+```
+
+**View logs**:
+```bash
+docker logs -f plex-monitor
+```
+
+### Unraid Setup
+
+#### Unraid Template
+
+```xml
+<Container version="2">
+  <Name>plex-monitor</Name>
+  <Repository>your-image</Repository>
+  <Registry>https://hub.docker.com/</Registry>
+  <Config Name="Config Directory" Target="/app" Default="/mnt/user/appdata/plex_monitor" Mode="rw" Description="Configuration directory" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/plex_monitor</Config>
+  <Config Name="Timezone" Target="TZ" Default="America/New_York" Mode="" Description="Timezone" Type="Variable" Display="always" Required="false" Mask="false">America/New_York</Config>
+  <PostArgs>python main.py -service</PostArgs>
+</Container>
+```
+
+#### Setup Steps for Unraid
+
+1. **Install the container** using the template above
+2. **Configure using Unraid Console**:
+   - Click on the container icon
+   - Select "Console"
+   - Run: `python main.py`
+   - Follow the interactive setup prompts
+3. **Restart the container** - it will now run in service mode
+4. **View logs**: Click container → "Logs" or use Console with `tail -f plex_monitor.log`
 
 ## Features
 
@@ -109,9 +258,62 @@ This runs continuously without user interaction, perfect for Docker containers.
 - ✅ Sonarr integration for TV shows
 - ✅ Radarr integration for movies
 - ✅ Library checking to avoid duplicates
+- ✅ Auto-search enabled (Sonarr/Radarr immediately search for content)
 - ✅ Auto-remove from watchlist after adding (configurable)
 - ✅ Support for Plex, Trakt, and Overseerr watchlists
 - ✅ Jellyfin library support
+- ✅ Comprehensive logging to file
+
+## Troubleshooting
+
+### "Sonarr: Not configured"
+**Cause**: Missing or incorrect Sonarr configuration
+
+**Solution**:
+1. Verify Sonarr is running and accessible
+2. Check the base URL is correct (include `http://` or `https://`)
+3. Verify API key is correct (no extra spaces)
+4. Test manually: `curl http://your-sonarr-url/api/v3/system/status -H "X-Api-Key: YOUR_API_KEY"`
+
+### "No TVDB ID found" (TV Shows)
+**Cause**: Plex metadata is incomplete or missing TVDB ID
+
+**Solution**:
+1. In Plex, go to the show → "Get Info" → "View XML"
+2. Look for `tvdb://` - if missing, refresh metadata
+3. Or manually add the show directly in Sonarr
+
+### "No TMDB/IMDB ID found" (Movies)
+**Cause**: Plex metadata is incomplete
+
+**Solution**:
+1. Refresh metadata in Plex for that movie
+2. Or manually add the movie directly in Radarr
+
+### "Root folder path not configured"
+**Cause**: Root folder not set in plex_monitor settings
+
+**Solution**:
+1. Go to Settings → Arr Services → Sonarr/Radarr
+2. Set the root folder path
+3. Must match exactly what's in Sonarr/Radarr → Settings → Root Folders
+
+### Items not being added
+**Possible causes**:
+- Items not yet released (future release dates)
+- Items already in library (if library checking is enabled)
+- Missing metadata (no TVDB/TMDB/IMDB ID)
+
+**Solution**:
+1. Enable debug logging: Settings → UI Settings → Debug printing → `true`
+2. Check logs for detailed error messages
+3. Verify item has been released
+4. Check if item already exists in Sonarr/Radarr
+
+### "KeyError: 'Show Menu on Startup'"
+**Cause**: Old or incomplete settings.json file
+
+**Solution**: Already fixed in latest version. If you still see this, delete `settings.json` and reconfigure.
 
 ## Key Changes from plex_debrid
 
@@ -122,95 +324,86 @@ This fork has been completely refactored:
 - ❌ All torrent scrapers (RarBG, Jackett, Prowlarr, Torrentio, etc.)
 - ❌ Release quality management and version filtering
 - ❌ Manual scraper interface
+- ❌ Web UI configuration
 
 ### Added
 - ✅ Sonarr API integration
 - ✅ Radarr API integration
 - ✅ Simplified workflow focused on watchlist → arr services
+- ✅ Auto-search on add
+
+### Philosophy
+**Keep it simple**: No databases, no web UIs, no complex dependencies. Just a straightforward Python script that monitors watchlists and adds content to Sonarr/Radarr.
 
 ## Migrating from plex_debrid 2.x
 
 If you're migrating from the original plex_debrid:
 
 1. **Backup** your current `settings.json`
-2. Pull the latest changes
+2. Pull the latest changes or clone fresh
 3. Run `python main.py` - you'll be prompted to reconfigure
-4. Your Plex and Trakt watchlist settings will be preserved
-5. You'll need to configure Sonarr and Radarr settings
+4. Your Plex and Trakt watchlist settings may be preserved
+5. You'll need to configure new Sonarr and Radarr settings
 
-## Troubleshooting
+See [MIGRATION.md](MIGRATION.md) for detailed migration guide.
 
-### "Sonarr: Not configured"
-- Ensure you've entered the Sonarr base URL and API key in settings
-- Test connectivity: Settings → Arr Services → Sonarr Base URL
+## Advanced Configuration
 
-### "No TVDB ID found"
-- Plex metadata may be incomplete
-- Try refreshing metadata in Plex for that show
+### Check Interval
+Default: 30 seconds
 
-### Items not being added
-- Check that items have been released (not future releases)
-- Verify library checking isn't marking them as already collected
-- Check debug logs: Settings → UI Settings → Debug printing → true
+To change: Settings → UI Settings → Check Interval
 
-## Docker / Unraid Setup
+### Auto-remove from Watchlist
+Default: Enabled
 
-### Initial Setup with Web UI
+To change: Settings → Content Services → Remove from watchlist after adding
 
-1. **Start the web configuration interface**:
-   ```bash
-   docker run -d \
-     --name plex-monitor-config \
-     -p 5000:5000 \
-     -v /path/to/config:/app \
-     your-image python webui.py
-   ```
+### Multiple Plex Users
+You can configure multiple Plex users to monitor their watchlists:
 
-2. **Configure via browser**:
-   - Open `http://your-server:5000`
-   - Enter your Plex token, Sonarr/Radarr URLs and API keys
-   - Test connections
-   - Save configuration
+Settings → Content Services → Plex → Add Users
 
-3. **Stop the web UI and start the service**:
-   ```bash
-   docker stop plex-monitor-config
-   docker run -d \
-     --name plex-monitor \
-     --restart unless-stopped \
-     -v /path/to/config:/app \
-     your-image python main.py -service
-   ```
+## Logs
 
-### Unraid Template
+All activity is logged to `plex_monitor.log` with timestamps:
 
-```xml
-<Container version="2">
-  <Name>plex-monitor</Name>
-  <Repository>your-image</Repository>
-  <Config Name="Config Directory" Target="/app" Default="/mnt/user/appdata/plex_monitor" Mode="rw" Description="Config directory" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/plex_monitor</Config>
-  <Config Name="Web UI Port (for setup)" Target="5000" Default="5000" Mode="tcp" Description="Web UI port" Type="Port" Display="always" Required="false" Mask="false">5000</Config>
-  <PostArgs>python main.py -service</PostArgs>
-</Container>
+```
+[31/12/25 10:30:15] processing movie: Test Movie (2024)
+[31/12/25 10:30:16] Radarr: Looking up movie with TMDB ID: 12345
+[31/12/25 10:30:17] Radarr: Successfully added movie: Test Movie
 ```
 
-**Setup Steps**:
-1. Install the container with `PostArgs: python webui.py`
-2. Open Web UI at `http://your-server:5000` and configure
-3. Stop container
-4. Change `PostArgs` to `python main.py -service`
-5. Start container - it will now run in background monitoring mode
+View logs:
+- **Local**: `tail -f plex_monitor.log`
+- **Docker**: `docker logs -f plex-monitor`
+- **Unraid**: Container → Logs button
 
 ## Environment Variables
 
-For Docker/automated deployments:
+Optional environment variables for Docker:
 
+- `TZ`: Timezone (e.g., `America/New_York`)
 - `CLIENT_ID`: Trakt OAuth client ID (if using Trakt)
 - `CLIENT_SECRET`: Trakt OAuth client secret (if using Trakt)
 
 ## Support
 
-This is a community fork. For issues or questions, please open a GitHub issue.
+This is a community fork. For issues or questions:
+- Open a GitHub issue
+- Check [MIGRATION.md](MIGRATION.md) for migration help
+- Check [SUMMARY.md](SUMMARY.md) for project overview
+
+## Contributing
+
+Contributions welcome! Please:
+1. Keep it simple (follow the project philosophy)
+2. Test thoroughly
+3. Update documentation
+
+## License
+
+Same as original plex_debrid project.
 
 ## Thanks to these contributors!
 
@@ -232,7 +425,7 @@ This is a community fork. For issues or questions, please open a GitHub issue.
                     <sub><b>funkypenguin</b></sub>
                 </a>
             </td>
-			<td align="center">
+		<td align="center">
                 <a href="https://github.com/mathiasmortus">
                     <img src="https://avatars.githubusercontent.com/u/77238760?v=4" width="64;" alt="mortus"/>
                     <br />

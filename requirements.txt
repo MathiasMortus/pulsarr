@@ -3,4 +3,3 @@ regex==2022.9.13
 requests==2.28.1
 six==1.16.0
 pydantic-settings
-flask==3.0.0
