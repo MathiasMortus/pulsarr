@@ -148,10 +148,71 @@ def status():
 
     return render_template('status.html', settings=settings, status=status_info)
 
+@app.route('/api/logs')
+def get_logs():
+    """API endpoint to get recent log entries"""
+    log_file = './plex_monitor.log'
+
+    try:
+        if os.path.exists(log_file):
+            # Get the last 100 lines of the log file
+            with open(log_file, 'r') as f:
+                lines = f.readlines()
+                # Return last 100 lines
+                recent_lines = lines[-100:] if len(lines) > 100 else lines
+                return jsonify({
+                    'success': True,
+                    'logs': ''.join(recent_lines)
+                })
+        else:
+            return jsonify({
+                'success': True,
+                'logs': 'No logs available yet. Start the service to see logs here.'
+            })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        })
+
+@app.route('/api/logs/stream')
+def stream_logs():
+    """Server-Sent Events endpoint for live log streaming"""
+    def generate():
+        log_file = './plex_monitor.log'
+
+        # Send initial logs
+        if os.path.exists(log_file):
+            with open(log_file, 'r') as f:
+                lines = f.readlines()
+                recent_lines = lines[-50:] if len(lines) > 50 else lines
+                for line in recent_lines:
+                    yield f"data: {line}\n\n"
+
+        # Keep connection open and send new logs as they appear
+        last_size = os.path.getsize(log_file) if os.path.exists(log_file) else 0
+
+        while True:
+            import time
+            time.sleep(1)
+
+            if os.path.exists(log_file):
+                current_size = os.path.getsize(log_file)
+                if current_size > last_size:
+                    with open(log_file, 'r') as f:
+                        f.seek(last_size)
+                        new_content = f.read()
+                        for line in new_content.split('\n'):
+                            if line:
+                                yield f"data: {line}\n\n"
+                    last_size = current_size
+
+    return app.response_class(generate(), mimetype='text/event-stream')
+
 if __name__ == '__main__':
     # Create templates directory if it doesn't exist
     os.makedirs('templates', exist_ok=True)
 
     # Run the web server
     # Use 0.0.0.0 to allow external connections (Docker)
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=5001, debug=False)

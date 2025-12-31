@@ -162,6 +162,72 @@
         .test-btn:hover {
             background: #1976D2;
         }
+
+        /* Terminal styles */
+        .terminal-container {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        .terminal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        .terminal-title {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .terminal-output {
+            color: #00ff00;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .terminal-output .log-line {
+            margin-bottom: 2px;
+        }
+
+        .terminal-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .terminal-btn {
+            background: #333;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .terminal-btn:hover {
+            background: #444;
+        }
+
+        .terminal-btn.active {
+            background: #4CAF50;
+        }
+
+        .auto-scroll-indicator {
+            color: #888;
+            font-size: 11px;
+        }
     </style>
 </head>
 <body>
@@ -259,6 +325,31 @@
                 <a href="/status" class="btn btn-secondary">📊 View Status</a>
             </div>
         </form>
+
+        <!-- Terminal/Logs Section -->
+        <div class="section">
+            <div class="terminal-container">
+                <div class="terminal-header">
+                    <span class="terminal-title">📟 Live Terminal Logs</span>
+                    <div class="terminal-controls">
+                        <span class="auto-scroll-indicator" id="scroll-indicator">Auto-scroll: ON</span>
+                        <button type="button" class="terminal-btn" id="toggle-scroll" onclick="toggleAutoScroll()">
+                            📜 Auto-scroll
+                        </button>
+                        <button type="button" class="terminal-btn" onclick="clearTerminal()">
+                            🗑️ Clear
+                        </button>
+                        <button type="button" class="terminal-btn active" id="stream-toggle" onclick="toggleStream()">
+                            ⏸️ Pause
+                        </button>
+                    </div>
+                </div>
+                <div class="terminal-output" id="terminal-output">
+                    <div class="log-line">Waiting for logs...</div>
+                    <div class="log-line">Tip: Start the plex_monitor service to see live logs here.</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -404,6 +495,120 @@
                 alert.style.display = 'none';
             }, 5000);
         }
+
+        // Terminal functionality
+        let autoScroll = true;
+        let eventSource = null;
+        let isStreaming = false;
+
+        function initTerminal() {
+            loadInitialLogs();
+            startLogStream();
+        }
+
+        async function loadInitialLogs() {
+            try {
+                const response = await fetch('/api/logs');
+                const data = await response.json();
+
+                if (data.success) {
+                    const output = document.getElementById('terminal-output');
+                    output.innerHTML = data.logs.split('\n').map(line =>
+                        `<div class="log-line">${escapeHtml(line)}</div>`
+                    ).join('');
+                    scrollToBottom();
+                }
+            } catch (error) {
+                console.error('Error loading logs:', error);
+            }
+        }
+
+        function startLogStream() {
+            if (isStreaming) return;
+
+            eventSource = new EventSource('/api/logs/stream');
+            isStreaming = true;
+
+            eventSource.onmessage = function(event) {
+                const output = document.getElementById('terminal-output');
+                const newLine = document.createElement('div');
+                newLine.className = 'log-line';
+                newLine.textContent = event.data;
+                output.appendChild(newLine);
+
+                // Keep only last 200 lines
+                while (output.children.length > 200) {
+                    output.removeChild(output.firstChild);
+                }
+
+                if (autoScroll) {
+                    scrollToBottom();
+                }
+            };
+
+            eventSource.onerror = function(error) {
+                console.error('EventSource error:', error);
+                setTimeout(() => {
+                    if (isStreaming) {
+                        eventSource.close();
+                        startLogStream();
+                    }
+                }, 5000);
+            };
+        }
+
+        function stopLogStream() {
+            if (eventSource) {
+                eventSource.close();
+                isStreaming = false;
+            }
+        }
+
+        function toggleStream() {
+            const btn = document.getElementById('stream-toggle');
+
+            if (isStreaming) {
+                stopLogStream();
+                btn.textContent = '▶️ Resume';
+                btn.classList.remove('active');
+            } else {
+                startLogStream();
+                btn.textContent = '⏸️ Pause';
+                btn.classList.add('active');
+            }
+        }
+
+        function toggleAutoScroll() {
+            autoScroll = !autoScroll;
+            const indicator = document.getElementById('scroll-indicator');
+            indicator.textContent = `Auto-scroll: ${autoScroll ? 'ON' : 'OFF'}`;
+
+            if (autoScroll) {
+                scrollToBottom();
+            }
+        }
+
+        function scrollToBottom() {
+            const container = document.querySelector('.terminal-container');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function clearTerminal() {
+            const output = document.getElementById('terminal-output');
+            output.innerHTML = '<div class="log-line">Terminal cleared.</div>';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Initialize terminal on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+            initTerminal();
+        });
     </script>
 </body>
 </html>
