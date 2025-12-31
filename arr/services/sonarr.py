@@ -97,6 +97,7 @@ def search_series(tvdb_id):
 def add_series(series_data, monitored=True, search_missing=False):
     """Add series to Sonarr"""
     from ui.ui_print import ui_print
+    from ui import ui_settings
 
     try:
         url = f"{base_url.rstrip('/')}/api/v3/series"

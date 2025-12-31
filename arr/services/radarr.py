@@ -104,6 +104,7 @@ def search_movie(tmdb_id=None, imdb_id=None):
 def add_movie(movie_data, monitored=True, search_now=False):
     """Add movie to Radarr"""
     from ui.ui_print import ui_print
+    from ui import ui_settings
 
     try:
         url = f"{base_url.rstrip('/')}/api/v3/movie"
