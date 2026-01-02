@@ -1,4 +1,4 @@
-# plex_monitor - Project Summary
+# Pulsarr - Project Summary
 
 ## What We Built
 
@@ -11,8 +11,8 @@ A **simple, focused automation tool** that connects Plex watchlists directly to 
 ## Architecture
 
 ```
-Plex Watchlist → plex_monitor → Sonarr (TV Shows)
-                              → Radarr (Movies)
+Plex Watchlist → Pulsarr → Sonarr (TV Shows)
+                         → Radarr (Movies)
 ```
 
 ### Core Components
@@ -96,7 +96,7 @@ Plex Watchlist → plex_monitor → Sonarr (TV Shows)
 ## File Structure
 
 ```
-plex_monitor/
+pulsarr/
 ├── arr/
 │   ├── __init__.py           # Router (movie → Radarr, show → Sonarr)
 │   └── services/
@@ -126,7 +126,7 @@ docker run -d \
   your-image python main.py -service
 ```
 
-View logs: `docker logs -f plex-monitor`
+View logs: `docker logs -f pulsarr`
 
 ## Performance
 
@@ -175,6 +175,6 @@ All errors logged with timestamps:
 
 ## Conclusion
 
-**plex_monitor** is a focused, simple tool that does one job well: connecting Plex watchlists to Sonarr/Radarr. No databases, no web UIs, no complexity - just reliable automation.
+**Pulsarr** is a focused, simple tool that does one job well: connecting Plex watchlists to Sonarr/Radarr. No databases, no web UIs, no complexity - just reliable automation.
 
 **Philosophy**: When something can be simple, keep it simple.

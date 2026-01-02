@@ -1,4 +1,4 @@
-version = ['2.103', "Settings compatible update", []]
+version = ['1.0.0', "Initial Pulsarr release - Plex Watchlist to Sonarr/Radarr", []]
 run_directly = "true"
 debug = "false"
 log = "false"

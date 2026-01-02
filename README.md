@@ -1,4 +1,8 @@
-# plex_monitor
+# Pulsarr
+
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](VERSION.md)
+[![Python](https://img.shields.io/badge/python-3.7+-green.svg)](https://www.python.org/)
+[![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 
 ## What is this?
 
@@ -33,8 +37,8 @@ This is a fork of plex_debrid that has been completely refactored to remove all 
 ### Step 1: Install
 
 ```bash
-git clone https://github.com/mathiasmortus/plex_monitor.git
-cd plex_monitor
+git clone https://github.com/mathiasmortus/pulsarr.git
+cd pulsarr
 pip install -r requirements.txt
 ```
 
@@ -88,14 +92,14 @@ After configuration, the setup will automatically test connections to Sonarr and
 ```
 
 If you see errors, check:
-- URLs are accessible from where you're running plex_monitor
+- URLs are accessible from where you're running Pulsarr
 - API keys are correct
 - No typos in configuration
 
 ### Step 4: Test with Watchlist
 
 1. Add a movie or TV show to your Plex watchlist
-2. Run plex_monitor:
+2. Run Pulsarr:
    ```bash
    python main.py
    ```
@@ -132,7 +136,7 @@ python main.py -service
 - Runs continuously without user interaction
 - Perfect for Docker containers or background processes
 - Checks watchlist every 30 seconds (configurable in settings)
-- All activity logged to `plex_monitor.log`
+- All activity logged to `pulsarr.log`
 
 **View logs in Docker**: Use `docker logs -f <container-name>` or Unraid's Docker console
 
@@ -145,12 +149,12 @@ Root folders must **exactly match** what's configured in Sonarr/Radarr:
 **In Sonarr**:
 1. Go to Settings → Media Management → Root Folders
 2. Copy the exact path (e.g., `/data/media/tv`)
-3. Paste this into plex_monitor settings
+3. Paste this into Pulsarr settings
 
 **In Radarr**:
 1. Go to Settings → Media Management → Root Folders
 2. Copy the exact path (e.g., `/data/media/movies`)
-3. Paste this into plex_monitor settings
+3. Paste this into Pulsarr settings
 
 ### Quality Profiles
 
@@ -158,7 +162,7 @@ Quality profiles control what quality releases Sonarr/Radarr will download:
 
 1. Go to Settings → Profiles in Sonarr/Radarr
 2. Note the ID of your preferred profile (hover over it or check the URL)
-3. Use this ID in plex_monitor settings (default is `1`)
+3. Use this ID in Pulsarr settings (default is `1`)
 
 ### Checking Existing Library
 
@@ -166,7 +170,7 @@ Enable "Library Collection Service" to prevent re-adding content:
 
 - Set to `plex` if using Plex as your media server
 - Set to `jellyfin` if using Jellyfin
-- plex_monitor will check if content exists before adding to Sonarr/Radarr
+- Pulsarr will check if content exists before adding to Sonarr/Radarr
 
 ## Docker / Unraid Setup
 
@@ -177,9 +181,9 @@ Create `docker-compose.yml`:
 ```yaml
 version: '3'
 services:
-  plex-monitor:
+  pulsarr:
     image: your-image
-    container_name: plex-monitor
+    container_name: pulsarr
     restart: unless-stopped
     volumes:
       - ./config:/app
@@ -190,7 +194,7 @@ services:
 
 **First-time setup** (interactive configuration):
 ```bash
-docker compose run --rm plex-monitor python main.py
+docker compose run --rm pulsarr python main.py
 ```
 
 **Normal operation**:
@@ -215,7 +219,7 @@ docker run -it --rm \
 **Normal operation**:
 ```bash
 docker run -d \
-  --name plex-monitor \
+  --name pulsarr \
   --restart unless-stopped \
   -v /path/to/config:/app \
   your-image python main.py -service
@@ -223,7 +227,7 @@ docker run -d \
 
 **View logs**:
 ```bash
-docker logs -f plex-monitor
+docker logs -f pulsarr
 ```
 
 ### Unraid Setup
@@ -232,10 +236,10 @@ docker logs -f plex-monitor
 
 ```xml
 <Container version="2">
-  <Name>plex-monitor</Name>
+  <Name>pulsarr</Name>
   <Repository>your-image</Repository>
   <Registry>https://hub.docker.com/</Registry>
-  <Config Name="Config Directory" Target="/app" Default="/mnt/user/appdata/plex_monitor" Mode="rw" Description="Configuration directory" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/plex_monitor</Config>
+  <Config Name="Config Directory" Target="/app" Default="/mnt/user/appdata/pulsarr" Mode="rw" Description="Configuration directory" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/pulsarr</Config>
   <Config Name="Timezone" Target="TZ" Default="America/New_York" Mode="" Description="Timezone" Type="Variable" Display="always" Required="false" Mask="false">America/New_York</Config>
   <PostArgs>python main.py -service</PostArgs>
 </Container>
@@ -250,7 +254,7 @@ docker logs -f plex-monitor
    - Run: `python main.py`
    - Follow the interactive setup prompts
 3. **Restart the container** - it will now run in service mode
-4. **View logs**: Click container → "Logs" or use Console with `tail -f plex_monitor.log`
+4. **View logs**: Click container → "Logs" or use Console with `tail -f pulsarr.log`
 
 ## Features
 
@@ -291,7 +295,7 @@ docker logs -f plex-monitor
 2. Or manually add the movie directly in Radarr
 
 ### "Root folder path not configured"
-**Cause**: Root folder not set in plex_monitor settings
+**Cause**: Root folder not set in Pulsarr settings
 
 **Solution**:
 1. Go to Settings → Arr Services → Sonarr/Radarr
@@ -366,7 +370,7 @@ Settings → Content Services → Plex → Add Users
 
 ## Logs
 
-All activity is logged to `plex_monitor.log` with timestamps:
+All activity is logged to `pulsarr.log` with timestamps:
 
 ```
 [31/12/25 10:30:15] processing movie: Test Movie (2024)
@@ -375,8 +379,8 @@ All activity is logged to `plex_monitor.log` with timestamps:
 ```
 
 View logs:
-- **Local**: `tail -f plex_monitor.log`
-- **Docker**: `docker logs -f plex-monitor`
+- **Local**: `tail -f pulsarr.log`
+- **Docker**: `docker logs -f pulsarr`
 - **Unraid**: Container → Logs button
 
 ## Environment Variables
@@ -387,12 +391,21 @@ Optional environment variables for Docker:
 - `CLIENT_ID`: Trakt OAuth client ID (if using Trakt)
 - `CLIENT_SECRET`: Trakt OAuth client secret (if using Trakt)
 
+## Documentation
+
+- 🚀 [QUICK_START.md](QUICK_START.md) - Get up and running fast
+- 📖 [VERSION.md](VERSION.md) - Version history and changelog
+- 🔢 [VERSION_CHEATSHEET.md](VERSION_CHEATSHEET.md) - Quick version numbering guide
+- 📝 [CONTRIBUTING.md](CONTRIBUTING.md) - How to contribute
+- 🔄 [MIGRATION.md](MIGRATION.md) - Migrate from plex_debrid
+- 📊 [SUMMARY.md](SUMMARY.md) - Project overview
+
 ## Support
 
 This is a community fork. For issues or questions:
-- Open a GitHub issue
-- Check [MIGRATION.md](MIGRATION.md) for migration help
-- Check [SUMMARY.md](SUMMARY.md) for project overview
+- 🐛 [Open a GitHub issue](https://github.com/mathiasmortus/pulsarr/issues)
+- 📖 Check the documentation above
+- 💬 Be specific about your setup and error messages
 
 ## Contributing
 
@@ -400,6 +413,9 @@ Contributions welcome! Please:
 1. Keep it simple (follow the project philosophy)
 2. Test thoroughly
 3. Update documentation
+4. **Update version in `/ui/ui_settings.py`** (see [CONTRIBUTING.md](CONTRIBUTING.md))
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines and version numbering.
 
 ## License
 
