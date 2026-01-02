@@ -12,12 +12,12 @@ def ui_cls(path='',update=""):
 
 def logo(path='',update=""):
     print('                                                         ')
-    print('    ____        __                     ')
-    print('   / __ \__  __/ /_________ ___________')
-    print('  / /_/ / / / / / ___/ __ `/ ___/ ___/')
-    print(' / ____/ /_/ / (__  ) /_/ / /  / /    ')
-    print('/_/    \__,_/_/____/\__,_/_/  /_/     ')
-    print('                              [v' + ui_settings.version[0] + ']' + update)
+    print('    ____            __                ')
+    print('   / __ \______  __/ /___ ___________')
+    print('  / / / / ___/ / / / / __ `/ ___/ ___/')
+    print(' / /_/ / /__/ /_/ / / /_/ / /  / /    ')
+    print(' \____/\___/\__,_/_/\__,_/_/  /_/     ')
+    print('                           [v' + ui_settings.version[0] + ']' + update)
     print()
 
 
@@ -36,7 +36,7 @@ def ui_print(string: str, debug="true"):
         #log
         if ui_settings.log == "true":
             try:
-                with open(config_dir + '/pulsarr.log', 'a') as f:
+                with open(config_dir + '/ocularr.log', 'a') as f:
                     if string == 'done' and sameline_log:
                         f.write('done' + '\n')
                         sameline_log = False
@@ -58,7 +58,7 @@ def ui_print(string: str, debug="true"):
                         f.write('[' + str(datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S")) + '] ' + string + '\n')
                         sameline_log = False
             except:
-                print('[' + str(datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S")) + '] logging error: couldnt write into log file at: ' + config_dir + '/pulsarr.log')
+                print('[' + str(datetime.datetime.now().strftime("%d/%m/%y %H:%M:%S")) + '] logging error: couldnt write into log file at: ' + config_dir + '/ocularr.log')
         #ui
         if debug == "true":
             if string == 'done' and sameline:

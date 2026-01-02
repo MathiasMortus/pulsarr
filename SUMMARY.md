@@ -1,4 +1,4 @@
-# Pulsarr - Project Summary
+# Ocularr - Project Summary
 
 ## What We Built
 
@@ -11,7 +11,7 @@ A **simple, focused automation tool** that connects Plex watchlists directly to 
 ## Architecture
 
 ```
-Plex Watchlist → Pulsarr → Sonarr (TV Shows)
+Plex Watchlist → Ocularr → Sonarr (TV Shows)
                          → Radarr (Movies)
 ```
 
@@ -96,7 +96,7 @@ Plex Watchlist → Pulsarr → Sonarr (TV Shows)
 ## File Structure
 
 ```
-pulsarr/
+ocularr/
 ├── arr/
 │   ├── __init__.py           # Router (movie → Radarr, show → Sonarr)
 │   └── services/
@@ -126,7 +126,7 @@ docker run -d \
   your-image python main.py -service
 ```
 
-View logs: `docker logs -f pulsarr`
+View logs: `docker logs -f ocularr`
 
 ## Performance
 
@@ -175,6 +175,6 @@ All errors logged with timestamps:
 
 ## Conclusion
 
-**Pulsarr** is a focused, simple tool that does one job well: connecting Plex watchlists to Sonarr/Radarr. No databases, no web UIs, no complexity - just reliable automation.
+**Ocularr** is a focused, simple tool that does one job well: connecting Plex watchlists to Sonarr/Radarr. No databases, no web UIs, no complexity - just reliable automation.
 
 **Philosophy**: When something can be simple, keep it simple.

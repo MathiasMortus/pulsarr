@@ -1,11 +1,11 @@
-# Pulsarr - Quick Start
+# Ocularr - Quick Start
 
 ## For First-Time Users
 
 ### 1. Install
 ```bash
-git clone https://github.com/mathiasmortus/pulsarr.git
-cd pulsarr
+git clone https://github.com/mathiasmortus/ocularr.git
+cd ocularr
 pip install -r requirements.txt
 ```
 
@@ -27,7 +27,7 @@ python main.py -service
 
 ### 4. Check Logs
 ```bash
-tail -f pulsarr.log
+tail -f ocularr.log
 ```
 
 ---
@@ -38,23 +38,23 @@ tail -f pulsarr.log
 ```bash
 docker run -it --rm \
   -v ./config:/app \
-  ghcr.io/mathiasmortus/pulsarr:latest \
+  ghcr.io/mathiasmortus/ocularr:latest \
   python main.py
 ```
 
 ### Normal Operation
 ```bash
 docker run -d \
-  --name pulsarr \
+  --name ocularr \
   --restart unless-stopped \
   -v ./config:/app \
-  ghcr.io/mathiasmortus/pulsarr:latest \
+  ghcr.io/mathiasmortus/ocularr:latest \
   python main.py -service
 ```
 
 ### View Logs
 ```bash
-docker logs -f pulsarr
+docker logs -f ocularr
 ```
 
 ---
@@ -108,12 +108,12 @@ python main.py  # Will run setup again
 - 🔧 Troubleshooting: [README.md#troubleshooting](README.md#troubleshooting)
 - 📝 Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)
 - 🔢 Version guide: [VERSION_CHEATSHEET.md](VERSION_CHEATSHEET.md)
-- 🐛 Report issues: [GitHub Issues](https://github.com/mathiasmortus/pulsarr/issues)
+- 🐛 Report issues: [GitHub Issues](https://github.com/mathiasmortus/ocularr/issues)
 
 ---
 
 ## Current Version
 
-**v1.0.0** - Initial Pulsarr release
+**v1.0.0** - Initial Ocularr release
 
 See [VERSION.md](VERSION.md) for full changelog.

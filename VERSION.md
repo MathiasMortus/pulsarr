@@ -1,4 +1,4 @@
-# Pulsarr - Version History
+# Ocularr - Version History
 
 ## How to Update Version
 
@@ -22,7 +22,7 @@ version = ['X.Y.Z', "Description of changes", []]
 ## Version History
 
 ### 1.0.0 (2026-01-02)
-**Initial Pulsarr Release**
+**Initial Ocularr Release**
 
 Complete fork and refactor of plex_debrid 2.x
 
@@ -31,7 +31,7 @@ Complete fork and refactor of plex_debrid 2.x
 - ✅ Radarr v3 API integration for movies
 - ✅ Auto-search enabled when adding to Sonarr/Radarr
 - ✅ Simple service mode for Docker deployment
-- ✅ Comprehensive logging to `pulsarr.log`
+- ✅ Comprehensive logging to `ocularr.log`
 
 **Removed:**
 - ❌ All debrid services (Real-Debrid, AllDebrid, Premiumize, etc.) - ~1000 lines
@@ -41,9 +41,9 @@ Complete fork and refactor of plex_debrid 2.x
 - ❌ Database dependencies
 
 **Changed:**
-- 🔄 Project renamed from plex_debrid to Pulsarr
+- 🔄 Project renamed from plex_debrid to Ocularr
 - 🔄 Simplified architecture focused on watchlist → arr services
-- 🔄 Log file: `plex_debrid.log` → `pulsarr.log`
+- 🔄 Log file: `plex_debrid.log` → `ocularr.log`
 
 **Fixed:**
 - 🐛 Circular import issues with function-level imports

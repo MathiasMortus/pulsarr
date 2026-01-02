@@ -1,6 +1,6 @@
-# Contributing to Pulsarr
+# Contributing to Ocularr
 
-Thank you for considering contributing to Pulsarr! This guide will help you make changes and update the version correctly.
+Thank you for considering contributing to Ocularr! This guide will help you make changes and update the version correctly.
 
 ## Quick Start for Contributors
 
@@ -91,7 +91,7 @@ Examples:
 
 ### Philosophy
 
-**Keep it simple** - The core principle of Pulsarr is simplicity:
+**Keep it simple** - The core principle of Ocularr is simplicity:
 
 - ❌ Don't add databases
 - ❌ Don't add web UIs (removed intentionally)
@@ -235,8 +235,8 @@ Before submitting:
 
 ## License
 
-By contributing, you agree your contributions will be licensed under the same license as Pulsarr.
+By contributing, you agree your contributions will be licensed under the same license as Ocularr.
 
 ---
 
-**Thank you for helping make Pulsarr better!** 🎉
+**Thank you for helping make Ocularr better!** 🎉

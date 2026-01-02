@@ -1,6 +1,6 @@
-# Migration Guide: plex_debrid 2.x → Pulsarr
+# Migration Guide: plex_debrid 2.x → Ocularr
 
-This guide helps you migrate from the original plex_debrid (with debrid services) to Pulsarr.
+This guide helps you migrate from the original plex_debrid (with debrid services) to Ocularr.
 
 ## What Changed?
 
@@ -47,8 +47,8 @@ cp settings.json settings.backup.json
 git pull origin main
 
 # Or clone fresh
-git clone https://github.com/mathiasmortus/pulsarr.git
-cd pulsarr
+git clone https://github.com/mathiasmortus/ocularr.git
+cd ocularr
 ```
 
 ### Step 3: Run the Application
@@ -120,7 +120,7 @@ To avoid re-downloading content you already have:
 Watchlist → Scrape torrents → Check debrid cache → Add to debrid → Download
 ```
 
-### New Workflow (Pulsarr):
+### New Workflow (Ocularr):
 ```
 Watchlist → Add to Sonarr/Radarr (with monitoring) → Sonarr/Radarr handles the rest
 ```
@@ -140,7 +140,7 @@ Watchlist → Add to Sonarr/Radarr (with monitoring) → Sonarr/Radarr handles t
 ### Configuration Errors
 
 **Error: "Sonarr: Not configured"**
-- Verify Sonarr base URL is accessible from where you're running Pulsarr
+- Verify Sonarr base URL is accessible from where you're running Ocularr
 - Test: `curl http://your-sonarr-url/api/v3/system/status -H "X-Api-Key: YOUR_API_KEY"`
 
 **Error: "No TVDB ID found"**
