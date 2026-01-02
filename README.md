@@ -6,6 +6,7 @@
 [![Python](https://img.shields.io/badge/python-3.7+-green.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
 </div>
+
 ## What is this?
 
 A lightweight automation tool that monitors your Plex watchlist and automatically adds:
